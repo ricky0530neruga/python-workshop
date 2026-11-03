@@ -36,7 +36,19 @@ def clean_expense(expense):   #清洗單筆資料
         "category": expense["category"].strip(),
         "amount": float(expense["amount"].strip()),
         "note": expense.get("note", "未填寫").strip() or "未填寫"
+
+
     }
+def validate_expense(expense):  #驗證每個key是否=="" 否則 return True
+    if (
+        expense["date"].strip() == ""
+        or expense["category"].strip() == ""
+        or expense["amount"] <= 0
+        or expense["note"].strip() == ""
+    ):
+        return False
+    else:
+        return True
 
 def clean_expenses(raw_expenses):
     cleaned_list = [] #把cleaned_list 作為清單建立
@@ -86,31 +98,42 @@ sorted_expenses = sorted(expenses, key=get_amount, reverse=True) #在expenses裡
 
 
 def print_report(expenses, budget):
+    
     print("------家庭月度支出------")
-    total = calculate_total(expenses)
+    
+    total = calculate_total(expenses)  #定義變數
     average = calculate_average(expenses)
     maximum = calculate_max(expenses)
     minimum = calculate_min(expenses)
     count = len(expenses)
 
-    
     remaining = budget - total
     usage_rate = total / budget
-    
 
-
+    sorted_expenses = sorted(expenses, key=get_amount, reverse=True) #先sort排序
+    for index, expense in enumerate(sorted_expenses, start=1): #用enumetare 排出序列
+        print(f"{index:02d}.{expense['category']:>8}：{expense['amount']:>8.2f} 元 佔比:{expense['amount']/budget:.1%} {expense['note']}")
     print(f"本月預算：{budget:.2f}元")
     print(f"支出筆數：{count} 筆")
-    print(f"總支出：{total:.2f} 元")
+    print(f"總支出：{total:,.2f} 元")
     print(f"平均支出：{average:.2f} 元")
     print(f"最高支出：{maximum:.2f} 元")
     print(f"最低支出：{minimum:.2f} 元")
     print(f"剩餘預算：{remaining:.2f} 元")
     print(f"預算使用率：{usage_rate:.1%}")
+    if usage_rate >= 100:
+        print(f"預算狀態：已超支")
+    else:
+        print(f"預算狀態：尚未超支")
+    result = any(expense["amount"] >= 500 for expense in expenses) #有一項expense["amount"] >=500 就true
+    print(f"是否有花費大於500?:{result}")
+    valid = all(validate_expense(expense)  for expense in expenses) #全部的expense["amount"] >0 才true
+    print(f"是否所有金額有效?：:{valid}")
+    
 
 
-budget = float(input("本月預算？"))
 
+budget = float(input("本月預算？")) #確認輸入預算>0 
 if budget <= 0:
     print("預算必須大於 0")
 else:
